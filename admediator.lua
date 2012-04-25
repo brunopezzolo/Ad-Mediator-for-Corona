@@ -56,7 +56,9 @@ local function findClientIPAddress()
         end
     end
     
-    network.request("http://whatismyip.org","GET",ipListener)
+    -- whatismyip.org is not working anymore!
+    -- you should use your own ip provider. ie: http://yourserver.com/getip.php
+    -- network.request("http://whatismyip.org","GET",ipListener)
 
 end
 
@@ -352,7 +354,7 @@ function AdMediator.initFromUrl(initUrl, initCallbackFunction)
 
     local function initRequestListener(event)
     
-        if event.isError then
+        if event.isError or event.status ~= 200 then
             initCallbackFunction(false)
             return
         end
