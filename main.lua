@@ -13,7 +13,8 @@
 ------------------------------------------------------------
 
 local widget = require("widget")
-require("admediator")
+tpAdMediatorLibpath = "admediator."
+require(tpAdMediatorLibpath.."admediator")
 
 local function initGui()
 
