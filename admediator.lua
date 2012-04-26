@@ -13,6 +13,7 @@
 ------------------------------------------------------------
 
 local json = require("json")
+tpAdMediatorLibpath = tpAdMediatorLibpath or ""
 
 AdMediator = {
     clientIPAddress = "",
@@ -568,7 +569,7 @@ function AdMediator.showFull(options)
 	
 	fullscreenOverlay = options.overlay
 	if not fullscreenOverlay then
-		local defaultOverlay = require("admediator_overlay")
+		local defaultOverlay = require(tpAdMediatorLibpath.."admediator_overlay")
 		fullscreenOverlay = defaultOverlay.new()
 		fullscreenOverlay:setCloseCallback( function() 
 			AdMediator.hideFull()
@@ -637,7 +638,7 @@ function AdMediator.addNetwork(params)
         return
     end
     
-    local networkObject = require(params.name)
+    local networkObject = require(tpAdMediatorLibpath..params.name)
     networks[#networks+1] = networkObject
 	if networkObject.requestFullAd then
 		fullbannerNetworks[#fullbannerNetworks+1] = networkObject
