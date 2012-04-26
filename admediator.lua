@@ -19,6 +19,8 @@ AdMediator = {
 }
 
 local networks = {}
+local fullbannerNetworks = {}
+setmetatable(fullbannerNetworks, { __mode = 'v' })
 local weightTable = {}
 local networksByPriority = {}
 local adRequestDelay = nil
@@ -30,15 +32,22 @@ local isHidden = true
 local enableWebView = false
 local webPopupVisible = false
 local currentWebPopupContent
+local currentFullscreenWebPopupContent
 local adDisplayGroup = display.newGroup()
 local adPosX = 0
 local adPosY = 0
+local adWidth = 320
+local adHeight = 50
 local animationEnabled = false
 local animationTargetX
 local animationTargetY
 local animationDuration
 local timerHandle = nil
 local paused = false
+
+local fullscreenOverlay
+local isHiddenFullscreen = true
+local savedState = {}
 
 local userAgentIOS = "Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_2 like Mac OS X; en) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8F190 Safari/6533.18.5"
 local userAgentAndroid = "Mozilla/5.0 (Linux; U; Android 2.2; en-us; Nexus One Build/FRF91) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1"
@@ -131,16 +140,17 @@ function AdMediator.viewportMetaTagForPlatform()
 
 end
 
-local function displayContentInWebPopup(x,y,width,height,contentHtml)
-    
-    local filename = "webview.html"
+local function displayWebPopup(x,y,width,height,contentHtml,customListener)
+	local filename = "webview.html"
     local path = system.pathForFile( filename, system.TemporaryDirectory )
     local fhandle = io.open(path,"w")
-    
+    fhandle:write(contentHtml)
+    io.close(fhandle)
+
     local newX = x
     local newY = y
-    local newWidth = 320
-    local newHeight = 50
+    local newWidth = width
+    local newHeight = height
     local scale = 1/display.contentScaleY
     
     if runningOnIPAD and dontScaleOnIPAD then
@@ -161,33 +171,61 @@ local function displayContentInWebPopup(x,y,width,height,contentHtml)
             
     end
  
-    fhandle:write(contentHtml)
-    io.close(fhandle)
-    
-    local function webPopupListener( event )            
+    local function webPopupListener( event )
         if string.find(event.url, "file://", 1, false) == 1 then
             return true
         else
             timer.performWithDelay(10,function()
                 system.openURL(event.url)
-                native.cancelWebPopup()
             end)
             
         end
     end    
     
-    local customListener = webPopupListener
+    local listener = customListener or webPopupListener
+    
+    local options = { hasBackground=false, baseUrl=system.TemporaryDirectory, urlRequest=listener }
+	
+	native.showWebPopup( newX, newY, newWidth, newHeight, filename.."?"..os.time(), options)
+    webPopupVisible = true
+end
+
+local function displayContentInWebPopup(x,y,width,height,contentHtml)
+	local customListener = nil
     if networks[currentNetworkIdx].customWebPopupListener ~= nil then
         customListener = networks[currentNetworkIdx]:customWebPopupListener()
     end
-    
-    local options = { hasBackground=false, baseUrl=system.TemporaryDirectory, urlRequest=customListener } 
-    native.showWebPopup( newX, newY, newWidth, newHeight, filename.."?"..os.time(), options)
-        
-        
-    webPopupVisible = true
+
+    displayWebPopup(x,y,width,height,contentHtml,customListener)
     currentWebPopupContent = contentHtml
-    
+end
+
+local function displayContentInWebPopupIfNotHidden(x,y,width,height,contentHtml)
+	if not isHidden and isHiddenFullscreen then
+        displayContentInWebPopup(x, y, width, height, contentHtml)
+    else
+        currentWebPopupContent = contentHtml
+    end
+end
+
+local function displayFullscreenContentInWebPopup(x,y,width,height,contentHtml)
+    displayWebPopup(x,y,width,height,contentHtml)
+    currentFullscreenWebPopupContent = contentHtml
+end
+
+local function displayFullscreenContentInWebPopupIfNotHidden(x,y,width,height,contentHtml)
+	if not isHiddenFullscreen then
+        displayFullscreenContentInWebPopup(x, y, width, height, contentHtml)
+    else
+        currentFullscreenWebPopupContent = contentHtml
+    end
+end
+
+local function hideWebPopup()
+	if webPopupVisible then
+        native.cancelWebPopup()
+        webPopupVisible = false
+    end
 end
 
 local function hideCurrentBannerWithAnimation(onCompleteFunc)
@@ -245,31 +283,49 @@ local function adImageDownloadListener(event)
     
 end
 
+local function addStyleToHtml(css,html)
+
+	local styledHtml = html
+	if string.find(html, '<style type="text/css">') then
+		local style, _style = string.match(html, '(.*<style type="text/css">.*)(</style>.*)')
+		styledHtml = style..css.._style
+	elseif string.find(html, '<head>') then
+		local head, _head = string.match(html, "(.*<head>.*)(</head>.*)")
+		styledHtml = head..'<style type="text/css">'..css..'</style>'.._head
+	end
+	
+	return styledHtml
+end
+
 local function adResponseCallback(event)
-    
-    local webPopupOpened = false
-    
+
     if event.available then
         
         currentImageUrl = event.imageUrl
         currentAdUrl = event.adUrl
         
+		local css = [[ 
+						#adContainer {
+								    width:]]..adWidth..[[;
+								    height:]]..adHeight..[[;
+								    display: table-cell;
+								    vertical-align: middle;
+								}
+						#adContainer img {
+								    display: block;
+								    margin: 0px auto;
+								} 
+					]]
+
         if event.htmlContent then
             
+			local html = addStyleToHtml(css, event.htmlContent)
             if animationEnabled and currentBanner then            
-                hideCurrentBannerWithAnimation(function()
-                        if not isHidden then
-                            displayContentInWebPopup(adPosX, adPosY, 320, 50, event.htmlContent)
-                        else
-                            currentWebPopupContent = event.htmlContent
-                        end
-                    end)
+                hideCurrentBannerWithAnimation(function() 
+						displayContentInWebPopupIfNotHidden(adPosX, adPosY, adWidth, adHeight, html)
+					end)
             else
-                if not isHidden then
-                    displayContentInWebPopup(adPosX, adPosY, 320, 50, event.htmlContent)
-                else
-                    currentWebPopupContent = event.htmlContent
-                end
+                displayContentInWebPopupIfNotHidden(adPosX, adPosY, adWidth, adHeight, html)
             end
             
             networks[currentNetworkIdx].usesWebPopup = true
@@ -280,32 +336,22 @@ local function adResponseCallback(event)
             
                 local meta = AdMediator.viewportMetaTagForPlatform()
                 local bodyStyle = "<body style=\"margin:0; padding:0;\">"
-                local contentHtml = "<html><head>"..meta.."</head>"..bodyStyle.."<a href='"..currentAdUrl.."'><img src='"..currentImageUrl.."'/></a></body></html>"
-                
+                local contentHtml = "<html><head>"..meta.."</head>"..bodyStyle.."<div id=\"adContainer\"><a href='"..currentAdUrl.."'><img src='"..currentImageUrl.."'/></a></div></body></html>"
+				contentHtml = addStyleToHtml(css, contentHtml)
+				
                 if animationEnabled and currentBanner then        
                     hideCurrentBannerWithAnimation(function()
-                            if not isHidden then
-                                displayContentInWebPopup(adPosX, adPosY, 320, 50, contentHtml)
-                            else
-                                currentWebPopupContent = contentHtml
-                            end
+                            displayContentInWebPopupIfNotHidden(adPosX, adPosY, adWidth, adHeight, contentHtml)
                         end)
                 else
-                    if not isHidden then
-                        displayContentInWebPopup(adPosX, adPosY, 320, 50, contentHtml)
-                    else
-                        currentWebPopupContent = contentHtml
-                    end
+                    displayContentInWebPopupIfNotHidden(adPosX, adPosY, adWidth, adHeight, contentHtml)
                 end
                 
                 networks[currentNetworkIdx].usesWebPopup = true
             
             else
                 
-                if webPopupVisible then
-                    native.cancelWebPopup()
-                    webPopupVisible = false
-                end
+				hideWebPopup()
                 
                 display.loadRemoteImage(currentImageUrl, "GET", adImageDownloadListener, "admediator_tmp_adimage_"..os.time(), system.TemporaryDirectory)
                 
@@ -323,6 +369,44 @@ local function adResponseCallback(event)
         fetchNextNetworkBasedOnPriority()
     end
     
+end
+
+function fullscreenAdViewFrame()
+	local x = 0
+	local y = 0
+	local width = 320
+	local height = 480
+	
+	if fullscreenOverlay and fullscreenOverlay.adView then
+		local adView = fullscreenOverlay.adView
+		x = adView.x-adView.height/2
+		y = adView.y-adView.width/2
+		width = adView.width
+		height = adView.height
+	end
+	
+	return {x=x, y=y, width=width, height=height}
+end
+
+local function fullAdResponseCallback(event)
+    if not event.available then return end
+
+	local frame = fullscreenAdViewFrame()
+	
+	local css = [[ 
+					#adContainer {
+							    width:]]..frame.width..[[;
+							    height:]]..frame.height..[[;
+							    display: table-cell;
+							    vertical-align: middle;
+							}
+					#adContainer img {
+							    display: block;
+							    margin: 0px auto;
+							} 
+				]]
+	local html = addStyleToHtml(css, event.htmlContent)
+	displayFullscreenContentInWebPopupIfNotHidden(frame.x, frame.y, frame.width, frame.height, html)
 end
 
 function AdMediator.init(posx,posy,adReqDelay)
@@ -347,6 +431,7 @@ function AdMediator.init(posx,posy,adReqDelay)
     end
     
     Runtime:addEventListener("adMediator_adResponse",adResponseCallback)
+	Runtime:addEventListener("adMediator_fullAdResponse",fullAdResponseCallback)
     
 end
 
@@ -397,14 +482,12 @@ function AdMediator.show()
     adDisplayGroup:toFront()
     
     if isHidden then
-    
+            
         if networks[currentNetworkIdx].usesWebPopup and currentWebPopupContent then
-            displayContentInWebPopup(adPosX, adPosY, 320, 50, currentWebPopupContent)
+            displayContentInWebPopup(adPosX, adPosY, adWidth, adHeight, currentWebPopupContent)
         end
-    
-        if timerHandle then
-            timer.resume(timerHandle)
-        end
+            
+        AdMediator.resume()
         
     end
     
@@ -441,20 +524,78 @@ end
 function AdMediator.hide()
     
     adDisplayGroup.isVisible = false
-    if webPopupVisible then
-        native.cancelWebPopup()
-        webPopupVisible = false
-    end
+	hideWebPopup()
     
     if not isHidden then
-        if timerHandle then
-            timer.pause(timerHandle)
-        end
+        AdMediator.pause()
     end
     
     isHidden = true
     
 end
+
+local function saveState()
+	savedState.isHidden = isHidden
+	savedState.paused = paused
+end
+
+local function restoreState()
+	if savedState.isHidden then
+		AdMediator.hide()
+	else
+		AdMediator.show()
+	end
+	
+	if savedState.paused then
+		AdMediator.pause()
+	else	
+		AdMediator.resume()
+	end
+end
+
+function AdMediator.showFull(options)
+	if not isHiddenFullscreen then return end
+	if not options then options = {} end
+	
+	if #fullbannerNetworks == 0 then
+		-- print("No network with fullbanner is configured.")
+		return 
+	end
+	
+	saveState()
+	AdMediator.pause()
+	AdMediator.hide()
+	
+	fullscreenOverlay = options.overlay
+	if not fullscreenOverlay then
+		local defaultOverlay = require("admediator_overlay")
+		fullscreenOverlay = defaultOverlay.new()
+		fullscreenOverlay:setCloseCallback( function() 
+			AdMediator.hideFull()
+			fullscreenOverlay:removeSelf()
+		end)
+	end
+
+	if currentFullscreenWebPopupContent then
+		local frame = fullscreenAdViewFrame()
+        displayFullscreenContentInWebPopup(frame.x, frame.y, frame.width, frame.height, currentFullscreenWebPopupContent)
+	end
+	
+	local idx = math.random(1, #fullbannerNetworks)
+	local network = fullbannerNetworks[idx]
+	network:requestFullAd()
+
+	isHiddenFullscreen = false
+end
+
+function AdMediator.hideFull()
+	if isHiddenFullscreen then return end
+
+	hideWebPopup()
+
+	isHiddenFullscreen = true
+	restoreState()
+end		
 
 function AdMediator.useAnimation(targetx,targety,duration)
 
@@ -488,7 +629,6 @@ function AdMediator.getUserAgentString()
     return userAgentString
 end
 
-
 function AdMediator.addNetwork(params)
 
     if params.enabled == nil then
@@ -499,6 +639,9 @@ function AdMediator.addNetwork(params)
     
     local networkObject = require(params.name)
     networks[#networks+1] = networkObject
+	if networkObject.requestFullAd then
+		fullbannerNetworks[#fullbannerNetworks+1] = networkObject
+	end
     networkObject.priority = params.backfillpriority
     networkObject.weight = params.weight
     networkObject.name = params.name
@@ -506,8 +649,8 @@ function AdMediator.addNetwork(params)
     
     networkObject:init(params.networkParams)
     
-    print("addNetwork:",params.name,params.weight,params.backfillpriority)
-    
+    -- print("addNetwork:",params.name,params.weight,params.backfillpriority)
+
 end
 
 function AdMediator.start()
@@ -536,14 +679,13 @@ function AdMediator.start()
         currentMaxWeight = currentMaxWeight + network.weight
         weightTable[#weightTable+1] = weightRecord
         
-        print("weight",_,network.weight)
+        -- print("weight",_,network.weight)
     end
     
     isHidden = false
     
     fetchRandomNetwork()
     timerHandle = timer.performWithDelay( adRequestDelay * 1000, fetchRandomNetwork, 0 )
-    
 end
 
 findClientIPAddress()

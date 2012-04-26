@@ -55,7 +55,7 @@ local function adRequestListener(event)
         if adUrl == nil or imageUrl == nil then
             available = false
         else
-            htmlContent = '<html><head>'..metaTag..'</head><body style="margin:0; padding:0;"><a href="'..adUrl..'"><img src="'..imageUrl..'"/></a></body></html>'                        
+            htmlContent = '<html><head>'..metaTag..'</head><body style="margin:0; padding:0;"><div id="adContainer"><a href="'..adUrl..'"><img src="'..imageUrl..'"/></a></div></body></html>'                        
         end
         
     end
@@ -76,7 +76,7 @@ function instance:init(networkParams)
     
     inmobiUAEncoded = urlencode(inmobiUA)
         
-    print("inmobi init:",clientKey)
+    -- print("inmobi init:",clientKey)
 end
 
 function instance:requestAd()

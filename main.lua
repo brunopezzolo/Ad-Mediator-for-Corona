@@ -27,6 +27,13 @@ local function initGui()
         width = 100, height = 40,
         onRelease = function() AdMediator.show() end
     }
+    local showFullButton = widget.newButton{
+        label = "full",
+        left = 110,
+        top = 250,
+        width = 100, height = 40,
+        onRelease = function() AdMediator.showFull() end
+    }
     local hideButton = widget.newButton{
         label = "hide",
         left = 170,
@@ -50,11 +57,11 @@ local function remote_configuration()
         if initialized then
             AdMediator.start()
         else
-            print("ERROR: AdMediator could not initialized properly!")
+            -- print("ERROR: AdMediator could not initialized properly!")
         end
     end
 
-    AdMediator.initFromUrl("http://br.com.tapps.s3.amazonaws.com/temp/numberlink-ads-ios.json", initCallback)    
+    AdMediator.initFromUrl("http://br.com.tapps.s3.amazonaws.com/temp/admediator-ads-ios.json", initCallback)    
     
 end
 

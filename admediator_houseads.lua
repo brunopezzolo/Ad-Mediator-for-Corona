@@ -46,11 +46,11 @@ end
 
 function instance:init(networkParams)
 
-    print("houseads init")
+    -- print("houseads init")
 
     for _,p in ipairs(networkParams) do
         houseAds[#houseAds+1] = p
-        print(p.image,p.target)
+        -- print(p.image,p.target)
     end
 
 	currentHouseAdIdx = getRandomHouseAdIdx()

@@ -125,7 +125,7 @@ local function webPopupListener( event )
         return true
     else
     
-        print("unknown protocol scheme", event.url)
+        -- print("unknown protocol scheme", event.url)
         return true
     
     end
@@ -164,7 +164,7 @@ function instance:init(networkParams)
     platform = urlencode(platform)
     submodel = urlencode(submodel)
     
-    print("admob init:",publisherId)
+    -- print("admob init:",publisherId)
 end
 
 function instance:customWebPopupListener()

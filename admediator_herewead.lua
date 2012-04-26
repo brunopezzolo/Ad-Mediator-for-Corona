@@ -55,7 +55,7 @@ local function adRequestListener(event)
         end
         
         if available then
-            htmlContent = '<html><head>'..metaTag..'</head><body style="margin:0; padding:0;"><a href="'..adUrl..'"><img src="'..imageUrl..'"/></a></body></html>'
+            htmlContent = '<html><head>'..metaTag..'</head><body style="margin:0; padding:0;"><div id="adContainer"><a href="'..adUrl..'"><img src="'..imageUrl..'"/></a></div></body></html>'
         end
         
         Runtime:dispatchEvent({name="adMediator_adResponse",available=available,htmlContent=htmlContent})
@@ -68,7 +68,7 @@ function instance:init(networkParams)
     channelId = networkParams.channelId
     zoneId = networkParams.zoneId
     testMode = networkParams.test
-    print("herewead init:",channelId,zoneId)
+    -- print("herewead init:",channelId,zoneId)
 end
 
 function instance:requestAd()

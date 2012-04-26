@@ -23,15 +23,13 @@ local clientKey = ""
 local platformId
 local metaTag = AdMediator.viewportMetaTagForPlatform()
 
-local function adRequestListener(event)
-
-    local available = true
+local function getParamsFromResponse( event )
+	local available = true
     local i,f,statusOK, imageUrl, adUrl
     
     if event.isError then
         available = false
     else
-            
         i,f,statusOK = string.find(event.response, '(<tns:Response Error="OK")')
         clientId = event.response:match('<tns:Client Id="(.-)"')
         
@@ -45,18 +43,37 @@ local function adRequestListener(event)
         if statusOK == nil or adUrl == nil or imageUrl == nil then
             available = false
         end
-        
     end
+
+	return available, imageUrl, adUrl
+end
+
+local function adRequestListener(event)
+
+    local available, imageUrl, adUrl = getParamsFromResponse(event)
     
     local htmlContent = ""
-    if available then    
-        local banner = '<a href="'..adUrl..'"><img src="'..imageUrl..'"/></a>'
+    if available then
+        local banner = '<div id="adContainer"><a href="'..adUrl..'"><img src="'..imageUrl..'"/></a></div>'
         htmlContent = '<html><head>'..metaTag..'</head><body style="margin:0; padding:0;">' .. banner .. '</body></html>'
     end
     
     Runtime:dispatchEvent({name="adMediator_adResponse",available=available,htmlContent=htmlContent})
-    
 end
+
+local function fullAdRequestListener( event )
+	
+    local available, imageUrl, adUrl = getParamsFromResponse(event)
+
+    local htmlContent = ""
+    if available then    
+        local banner = '<div id="adContainer"><a href="'..adUrl..'"><img src="'..imageUrl..'"/></a></div>'
+        htmlContent = '<html><head>'..metaTag..'</head><body style="margin:0; padding:0;">'..banner..'</body></html>'
+    end
+
+	Runtime:dispatchEvent({name="adMediator_fullAdResponse",available=available,htmlContent=htmlContent})
+end
+
 
 function instance:init(networkParams)
     clientKey = networkParams.clientKey
@@ -67,20 +84,29 @@ function instance:init(networkParams)
         platformId = "642"
     end
     
-    print("inneractive init:",clientKey)
+    -- print("inneractive init:",clientKey)
 end
 
-function instance:requestAd()
-    
+function instance:requestAd(isFullscreen)
     local headers = {} 
     headers["User-Agent"] = userAgent
     
     local params = {}
     params.headers = headers
     
-    local uriParams = "aid=" .. clientKey .. "&v="..protocolVersion.."&po="..platformId.."&w=320&h=480&hid="..deviceId.."&cid=" .. clientId .. "&t=" .. os.time()
-    network.request(adServerUrl.."?"..uriParams,"GET",adRequestListener,params)
-    
+	local listener = adRequestListener
+	local uriParams = "aid=" .. clientKey .. "&v="..protocolVersion.."&po="..platformId.."&w=320&h=480&hid="..deviceId.."&cid=" .. clientId .. "&t=" .. os.time()
+	
+	if isFullscreen then
+		listener = fullAdRequestListener
+		uriParams = "aid=" .. clientKey .. "&v="..protocolVersion.."&po="..platformId.."&w=320&h=480&hid="..deviceId.."&cid=" .. clientId .. "&fs=true" .. "&t=" .. os.time()
+	end
+	
+    network.request(adServerUrl.."?"..uriParams,"GET",listener,params) 
+end
+
+function instance:requestFullAd()
+	instance:requestAd(true)
 end
 
 return instance
