@@ -33,7 +33,7 @@ local function initGui()
         left = 110,
         top = 250,
         width = 100, height = 40,
-        onRelease = function() AdMediator.showFull() end
+        onRelease = function() AdMediator.showFull({frame = {x = 0, y = 0, width = 320, height = 320}}) end
     }
     local hideButton = widget.newButton{
         label = "hide",

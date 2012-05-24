@@ -46,7 +46,7 @@ local animationDuration
 local timerHandle = nil
 local paused = false
 
-local fullscreenOverlay
+local fullscreenFrame
 local isHiddenFullscreen = true
 local savedState = {}
 
@@ -178,8 +178,7 @@ local function displayWebPopup(x,y,width,height,contentHtml,customListener)
         else
             timer.performWithDelay(10,function()
                 system.openURL(event.url)
-            end)
-            
+            end)  
         end
     end    
     
@@ -373,20 +372,8 @@ local function adResponseCallback(event)
 end
 
 function fullscreenAdViewFrame()
-	local x = 0
-	local y = 0
-	local width = 320
-	local height = 480
-	
-	if fullscreenOverlay and fullscreenOverlay.adView then
-		local adView = fullscreenOverlay.adView
-		x = adView.x-adView.height/2
-		y = adView.y-adView.width/2
-		width = adView.width
-		height = adView.height
-	end
-	
-	return {x=x, y=y, width=width, height=height}
+	fullscreenFrame = fullscreenFrame or {x=0, y=0, width=320, height=480}
+	return fullscreenFrame
 end
 
 local function fullAdResponseCallback(event)
@@ -567,16 +554,7 @@ function AdMediator.showFull(options)
 	AdMediator.pause()
 	AdMediator.hide()
 	
-	fullscreenOverlay = options.overlay
-	if not fullscreenOverlay then
-		local defaultOverlay = require(tpAdMediatorLibpath.."admediator_overlay")
-		fullscreenOverlay = defaultOverlay.new()
-		fullscreenOverlay:setCloseCallback( function() 
-			AdMediator.hideFull()
-			fullscreenOverlay:removeSelf()
-		end)
-	end
-
+	fullscreenFrame = options.frame
 	if currentFullscreenWebPopupContent then
 		local frame = fullscreenAdViewFrame()
         displayFullscreenContentInWebPopup(frame.x, frame.y, frame.width, frame.height, currentFullscreenWebPopupContent)
