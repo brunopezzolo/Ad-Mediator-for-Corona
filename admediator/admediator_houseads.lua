@@ -58,7 +58,12 @@ end
 
 function instance:requestAd()
     
-    network.request(houseAds[currentHouseAdIdx].image,"GET",adRequestListener)
+    Runtime:dispatchEvent({name="adMediator_adResponse",available=true,imageUrl=houseAds[currentHouseAdIdx].image,adUrl=houseAds[currentHouseAdIdx].target})
+
+    currentHouseAdIdx = currentHouseAdIdx + 1
+    if currentHouseAdIdx > #houseAds then
+        currentHouseAdIdx = 1
+    end
     
 end
 
