@@ -168,7 +168,13 @@ local function displayWebPopup(x,y,width,height,contentHtml,customListener)
         newWidth = newWidth/scale
         newHeight = newHeight/scale
     end
- 
+
+    -- fix scaling issues for ipad 3rd generation
+    if scale > 4 then
+        newWidth = newWidth * 2
+        newHeight = newHeight * 2
+    end
+
     if platform == PLATFORM_ANDROID then
 
         -- Max scale for android is 2 (enforced above just in case), so adjust web popup if over 2. 
@@ -206,17 +212,7 @@ local function displayContentInWebPopup(x,y,width,height,contentHtml)
         customListener = networks[currentNetworkIdx]:customWebPopupListener()
     end
     
-    -- fix scaling issues for ipad 3rd generation
-    if 1/display.contentScaleY > 4 then
-        newWidth = newWidth * 2
-        newHeight = newHeight * 2
-    end
-    
-    local options = { hasBackground=false, baseUrl=system.TemporaryDirectory, urlRequest=customListener } 
-    native.showWebPopup( newX, newY, newWidth, newHeight, filename.."?"..os.time(), options)
-        
-        
-    webPopupVisible = true
+	displayWebPopup(x,y,width,height,contentHtml,customListener)
     currentWebPopupContent = contentHtml
 end
 
