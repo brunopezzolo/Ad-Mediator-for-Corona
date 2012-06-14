@@ -23,7 +23,6 @@ local deviceType = AdMediator.getPlatform()
 local testMode
 local appIdentifier
 local userAgent = AdMediator.getUserAgentString()
-local deviceId = system.getInfo("deviceID")
 local preqs = 0
 local askip = 0
 local ptime = 1
@@ -107,6 +106,8 @@ local function webPopupListener( event )
                 end)
                 
                 prevOpenUrl = link
+            else
+                prevOpenUrl = nil
             end
             
         end            
@@ -120,11 +121,15 @@ local function webPopupListener( event )
             return true
         end
     
-        timer.performWithDelay(10,function()
-           system.openURL(event.url)
-            native.cancelWebPopup()
-        end)
-        return true
+        if prevOpenUrl ~= event.url then    
+            timer.performWithDelay(10,function()
+               system.openURL(event.url)
+                native.cancelWebPopup()
+            end)
+            prevOpenUrl = event.url
+        else
+            prevOpenUrl = nil
+        end
     else
     
         -- print("unknown protocol scheme", event.url)

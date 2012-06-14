@@ -101,76 +101,76 @@ local function local_configuration()
 
     -- clientKey is you application specific token from inmobi
     -- if you want to server demo (test) ads, set test parameter to true     
-    AdMediator.addNetwork(
-        {
-            name="admediator_inmobi",
-            weight=25,
-            backfillpriority=1,
-            enabled=true,
-            networkParams = {
-                clientKey="YOUR_INMOBI_APP_KEY",
-                test=true,
-            },
-        }
-    )
-    
-    AdMediator.addNetwork(
-        {
-            name="admediator_inneractive",    
-            weight=25,
-            backfillpriority=2,
-            enabled=true,
-            networkParams = {
-                clientKey="YOUR_INNERACTIVE_APP_KEY",
-            },            
-        }
-    )
+    -- AdMediator.addNetwork(
+    --     {
+    --         name="admediator_inmobi",
+    --         weight=25,
+    --         backfillpriority=1,
+    --         enabled=true,
+    --         networkParams = {
+    --             clientKey="YOUR_INMOBI_APP_KEY",
+    --             test=true,
+    --         },
+    --     }
+    -- )
+    -- 
+    -- AdMediator.addNetwork(
+    --     {
+    --         name="admediator_inneractive",    
+    --         weight=25,
+    --         backfillpriority=2,
+    --         enabled=true,
+    --         networkParams = {
+    --             clientKey="YOUR_INNERACTIVE_APP_KEY",
+    --         },            
+    --     }
+    -- )
    
     -- to receive live ads, put your app's publisherId and disable test mode
     AdMediator.addNetwork(
         {
             name="admediator_admob",
-            weight=25,
-            backfillpriority=3,
+            weight=100,
+            backfillpriority=1,
             enabled=true,
             networkParams = {
-                publisherId="YOUR_ADMOB_PUBLISHER_ID",
-                appIdentifier="com.yourcompany.AdMediatorSampleApp",
+                publisherId="Tapps_Numberlink_iPhone",
+                appIdentifier="br.com.tapps.tappyescape",
                 test=true,
             },
         }
     )
     
-    -- herewead network uses additional channelId and zoneId parameters.
-    -- You should get them from herewead after registiring your application.
-    AdMediator.addNetwork(
-        {
-            name="admediator_herewead",
-            weight=25,
-            backfillpriority=4,
-            enabled=true,
-            networkParams = {
-                channelId="YOUR_CHANNEL_ID_FROM_HEREWEAD",
-                zoneId="0",
-                test=true,
-            },            
-        }
-    )
-    
-    -- you can configure houseads plugin by using an array of (banner_image, target_url) data 
-    AdMediator.addNetwork(
-        {
-            name="admediator_houseads",
-            weight=0,
-            backfillpriority=5,
-            networkParams = {
-                {image="http://he2apps.com/okey/adsv2/chatkapi.png",target="http://bit.ly/housead_target1"},
-                {image="http://he2apps.com/okey/adsv2/komikreplikler.jpg",target="http://bit.ly/housead_target2"},
-                {image="http://he2apps.com/okey/adsv2/2resim5fark.jpg",target="http://bit.ly/housead_target3"},
-            },            
-        }
-    )
-    
+    -- -- herewead network uses additional channelId and zoneId parameters.
+    -- -- You should get them from herewead after registiring your application.
+    -- AdMediator.addNetwork(
+    --     {
+    --         name="admediator_herewead",
+    --         weight=25,
+    --         backfillpriority=4,
+    --         enabled=true,
+    --         networkParams = {
+    --             channelId="YOUR_CHANNEL_ID_FROM_HEREWEAD",
+    --             zoneId="0",
+    --             test=true,
+    --         },            
+    --     }
+    -- )
+    -- 
+    -- -- you can configure houseads plugin by using an array of (banner_image, target_url) data 
+    -- AdMediator.addNetwork(
+    --     {
+    --         name="admediator_houseads",
+    --         weight=0,
+    --         backfillpriority=5,
+    --         networkParams = {
+    --             {image="http://he2apps.com/okey/adsv2/chatkapi.png",target="http://bit.ly/housead_target1"},
+    --             {image="http://he2apps.com/okey/adsv2/komikreplikler.jpg",target="http://bit.ly/housead_target2"},
+    --             {image="http://he2apps.com/okey/adsv2/2resim5fark.jpg",target="http://bit.ly/housead_target3"},
+    --         },            
+    --     }
+    -- )
+    -- 
     -- finally, start serving ads
     AdMediator.start()       
     
@@ -185,4 +185,4 @@ initGui()
 --
 -- For this sample application we use manual configuration
 -- local_configuration()
-remote_configuration()
+local_configuration()
