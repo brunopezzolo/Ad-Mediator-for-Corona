@@ -47,6 +47,8 @@ local animationTargetY
 local animationDuration
 local timerHandle = nil
 local paused = false
+local bannerWidth = 320
+local bannerHeight = 50
 
 local fullscreenFrame
 local isHiddenFullscreen = true
@@ -150,8 +152,8 @@ function AdMediator.getPlatform()
     return platform
 end
 
-local function displayWebPopup(x,y,width,height,contentHtml,customListener)
-    
+
+local function displayWebPopup(x,y,width,height,contentHtml,customListener)    
     local filename = "webview.html"
     local path = system.pathForFile( filename, system.TemporaryDirectory )
     local fhandle = io.open(path,"w")
@@ -160,6 +162,7 @@ local function displayWebPopup(x,y,width,height,contentHtml,customListener)
 
     local newX = x
     local newY = y
+
     local newWidth = width
     local newHeight = height
     local scale = 1/display.contentScaleY
@@ -180,14 +183,17 @@ local function displayWebPopup(x,y,width,height,contentHtml,customListener)
         -- Max scale for android is 2 (enforced above just in case), so adjust web popup if over 2. 
         if scale > 2 then
             scale = scale/2
-            newWidth = (width/scale) + 1
-            newHeight = (height/scale) + 2
-            newX = x + (width - newWidth)/2
-            newY = y + (height - newHeight)/2
+            newWidth = (bannerWidth/scale) + 1
+            newHeight = (bannerHeight/scale) + 2
+            newX = x + (bannerWidth - newWidth)/2
+            newY = y + (bannerHeight - newHeight)/2
         end
             
     end
  
+    fhandle:write(contentHtml)
+    io.close(fhandle)
+    
     local function webPopupListener( event )
         if string.find(event.url, "file://", 1, false) == 1 then
             return true
@@ -337,11 +343,19 @@ local function adResponseCallback(event)
             
 			local html = addStyleToHtml(css, event.htmlContent)
             if animationEnabled and currentBanner then            
-                hideCurrentBannerWithAnimation(function() 
-						displayContentInWebPopupIfNotHidden(adPosX, adPosY, adWidth, adHeight, html)
-					end)
+                hideCurrentBannerWithAnimation(function()
+                        if not isHidden then
+                            displayContentInWebPopup(adPosX, adPosY, event.htmlContent)
+                        else
+                            currentWebPopupContent = event.htmlContent
+                        end
+                    end)
             else
-                displayContentInWebPopupIfNotHidden(adPosX, adPosY, adWidth, adHeight, html)
+                if not isHidden then
+                    displayContentInWebPopup(adPosX, adPosY, event.htmlContent)
+                else
+                    currentWebPopupContent = event.htmlContent
+                end
             end
             
             networks[currentNetworkIdx].usesWebPopup = true
@@ -357,10 +371,18 @@ local function adResponseCallback(event)
 				
                 if animationEnabled and currentBanner then        
                     hideCurrentBannerWithAnimation(function()
-                            displayContentInWebPopupIfNotHidden(adPosX, adPosY, adWidth, adHeight, contentHtml)
+                            if not isHidden then
+                                displayContentInWebPopup(adPosX, adPosY, contentHtml)
+                            else
+                                currentWebPopupContent = contentHtml
+                            end
                         end)
                 else
-                    displayContentInWebPopupIfNotHidden(adPosX, adPosY, adWidth, adHeight, contentHtml)
+                    if not isHidden then
+                        displayContentInWebPopup(adPosX, adPosY, contentHtml)
+                    else
+                        currentWebPopupContent = contentHtml
+                    end
                 end
                 
                 networks[currentNetworkIdx].usesWebPopup = true
@@ -488,7 +510,11 @@ function AdMediator.show()
     if isHidden then
             
         if networks[currentNetworkIdx].usesWebPopup and currentWebPopupContent then
-            displayContentInWebPopup(adPosX, adPosY, adWidth, adHeight, currentWebPopupContent)
+            displayContentInWebPopup(adPosX, adPosY, currentWebPopupContent)
+        end
+    
+        if timerHandle then
+            timer.resume(timerHandle)
         end
             
         AdMediator.resume()
@@ -643,9 +669,10 @@ function AdMediator.addNetwork(params)
     networkObject.idx = #networks    
     
     networkObject:init(params.networkParams)
-    
-    -- print("addNetwork:",params.name,params.weight,params.backfillpriority)
 
+    -- print("addNetwork:",params.name,params.weight,params.backfillpriority)
+    
+    return networkObject
 end
 
 function AdMediator.start()
