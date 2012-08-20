@@ -47,7 +47,7 @@ local function adRequestListener(event)
             htmlContent = '<html><head>'..metaTag..'</head><body style="margin:0; padding:0;">'..event.response..'</body></html>'
         end
     end
-    
+    print(htmlContent)
     Runtime:dispatchEvent({name="adMediator_adResponse",available=available,htmlContent=htmlContent})
 
 end

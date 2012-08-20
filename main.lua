@@ -13,8 +13,8 @@
 ------------------------------------------------------------
 
 local widget = require("widget")
-tpAdMediatorLibpath = "admediator."
-require(tpAdMediatorLibpath.."admediator")
+admediatorLibPath = "admediator."
+require(admediatorLibPath.."admediator")
 
 local function initGui()
 
@@ -62,7 +62,7 @@ local function remote_configuration()
         end
     end
 
-    AdMediator.initFromUrl("http://br.com.tapps.s3.amazonaws.com/temp/admediator-ads-ios.json", initCallback)    
+    AdMediator.initFromUrl("http://br.com.tapps.ads.s3.amazonaws.com/json/customads-test.json", initCallback)    
     
 end
 
@@ -125,47 +125,47 @@ local function local_configuration()
     --     }
     -- )
 
-    AdMediator.addNetwork(
-        {
-            name="admediator_inmobi",
-            weight=20,
-            backfillpriority=1,
-            enabled=true,
-            networkParams = {
-                clientKey="YOUR_INMOBI_APP_KEY",
-                test=true,
-            },
-        }
-    )
-    
-    -- to receive LIVE inneractive ads, set clientKey to your inneractive app key
-    AdMediator.addNetwork(
-        {
-            name="admediator_inneractive",    
-            weight=20,
-            backfillpriority=2,
-            enabled=true,
-            networkParams = {
-                clientKey="YOUR_INNERACTIVE_APP_KEY",
-            },            
-        }
-    )
-   
-    -- to receive live ads, put your app's publisherId and disable test mode
-    AdMediator.addNetwork(
-        {
-            name="admediator_admob",
-            weight=100,
-            backfillpriority=1,
-            enabled=true,
-            networkParams = {
-                publisherId="Tapps_Numberlink_iPhone",
-                appIdentifier="br.com.tapps.tappyescape",
-                test=true,
-            },
-        }
-    )
-    
+--    AdMediator.addNetwork(
+--        {
+--            name="admediator_inmobi",
+--            weight=20,
+--            backfillpriority=1,
+--            enabled=true,
+--            networkParams = {
+--                clientKey="YOUR_INMOBI_APP_KEY",
+--                test=true,
+--            },
+--        }
+--    )
+--    
+--    -- to receive LIVE inneractive ads, set clientKey to your inneractive app key
+--    AdMediator.addNetwork(
+--        {
+--            name="admediator_inneractive",    
+--            weight=20,
+--            backfillpriority=2,
+--            enabled=true,
+--            networkParams = {
+--                clientKey="YOUR_INNERACTIVE_APP_KEY",
+--            },            
+--        }
+--    )
+--   
+--    -- to receive live ads, put your app's publisherId and disable test mode
+--    AdMediator.addNetwork(
+--        {
+--            name="admediator_admob",
+--            weight=100,
+--            backfillpriority=1,
+--            enabled=true,
+--            networkParams = {
+--                publisherId="Tapps_Numberlink_iPhone",
+--                appIdentifier="br.com.tapps.tappyescape",
+--                test=true,
+--            },
+--        }
+--    )
+
     -- -- herewead network uses additional channelId and zoneId parameters.
     -- -- You should get them from herewead after registiring your application.
     -- AdMediator.addNetwork(
@@ -201,52 +201,52 @@ local function local_configuration()
     -- set enableAlertAds to receive alert ads (by calling tapit:requestAlertAds())
     -- set swapButtons=true to swap alert ads confirmation buttons.
     -- tapit plugin also supports interstitial ads. please check main-tapitdemo.lua for further instructions.
-    local tapit = AdMediator.addNetwork(
-        {
-            name="admediator_tapit",
-            weight=20,
-            backfillpriority=5,
-            enabled=true,
-            networkParams = {
-                zoneId="7527",
-                test=true,
-                enableAlertAds=false,
-                swapButtons=false,
-            },
-        }
-    )
-
-    AdMediator.addNetwork(
-        {
-            name="admediator_madvertise",
-            weight=20,
-            backfillpriority=6,
-            enabled=true,
-            networkParams = {
-                clientToken="your_client_token_from_madvertise",
-                test=true,
-            },
-        }
-    )
+--    local tapit = AdMediator.addNetwork(
+--        {
+--            name="admediator_tapit",
+--            weight=20,
+--            backfillpriority=5,
+--            enabled=true,
+--            networkParams = {
+--                zoneId="7527",
+--                test=true,
+--                enableAlertAds=false,
+--                swapButtons=false,
+--            },
+--        }
+--    )
+--
+--    AdMediator.addNetwork(
+--        {
+--            name="admediator_madvertise",
+--            weight=20,
+--            backfillpriority=6,
+--            enabled=true,
+--            networkParams = {
+--                clientToken="your_client_token_from_madvertise",
+--                test=true,
+--            },
+--        }
+--    )
     
     -- you can configure houseads plugin by using an array of (banner_image, target_url) data 
-    AdMediator.addNetwork(
-        {
-            name="admediator_houseads",
-            weight=0,
-            backfillpriority=7,
-            networkParams = {
-                {image="http://he2apps.com/okey/adsv2/chatkapi.png",target="http://bit.ly/housead_target1"},
-                {image="http://he2apps.com/okey/adsv2/komikreplikler.jpg",target="http://bit.ly/housead_target2"},
-                {image="http://he2apps.com/okey/adsv2/2resim5fark.jpg",target="http://bit.ly/housead_target3"},
-            },            
-        }
-    )
+--    AdMediator.addNetwork(
+--        {
+--            name="admediator_houseads",
+--            weight=0,
+--            backfillpriority=7,
+--            networkParams = {
+--                {image="http://he2apps.com/okey/adsv2/chatkapi.png",target="http://bit.ly/housead_target1"},
+--                {image="http://he2apps.com/okey/adsv2/komikreplikler.jpg",target="http://bit.ly/housead_target2"},
+--                {image="http://he2apps.com/okey/adsv2/2resim5fark.jpg",target="http://bit.ly/housead_target3"},
+--            },            
+--        }
+--    )
 
     -- you can use this simple plugin to send custom parameters to your own server side scripts and
     -- show returning html content. This plugin can be used for many useful things. You can implement
     -- new ad networks (by usign server-side apis) or use javascript driven interactive houseads, etc.
-    --[[
+--[[
     AdMediator.addNetwork(
         {
             name="admediator_customHtml",
@@ -265,10 +265,9 @@ local function local_configuration()
             },
         }
     )
-    ]]--
-    
+--]]    
     -- finally, start serving ads
-    AdMediator.start()       
+--    AdMediator.start()       
     
 end
 
@@ -276,9 +275,12 @@ display.setStatusBar( display.HiddenStatusBar )
 
 initGui()
 
+
+
 -- You can configure AdMediator either manually or by using a remote configuration URI
 --
 --
 -- For this sample application we use manual configuration
 -- local_configuration()
-local_configuration()
+
+remote_configuration()
